@@ -1,0 +1,27 @@
+{
+  "name": "ai-support-checker",
+  "version": "0.1.0",
+  "description": "Count what your AI support agent closed alone, handed back, and which closes were post-purchase exceptions. Runs in your browser; your file never leaves your computer.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "ai-support-checker": "cli/check.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "rules": "node scripts/build-rules.js",
+    "samples": "node samples/generate.js",
+    "test": "node scripts/build-rules.js --check && node --test test/*.test.js",
+    "golden": "node test/update-golden.js",
+    "build": "node scripts/build.js",
+    "serve": "node scripts/serve.js",
+    "e2e": "node scripts/build.js && playwright test",
+    "copy-check": "node scripts/check-copy.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}

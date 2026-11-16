@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI support checker: did your AI agent finish the job? · Closewell</title>
+  <meta name="description" content="Drop in a Gorgias ticket export and see how many tickets your AI agent closed on its own, how many it handed back, and how many were post-purchase exceptions. Runs in your browser; your file never leaves your computer.">
+  <link rel="canonical" href="https://closewellhq.com/check/">
+  <link rel="preload" href="fonts/manrope-800.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/inter-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#F5F6F2">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Closewell">
+  <meta property="og:url" content="https://closewellhq.com/check/">
+  <meta property="og:title" content="Did your AI support agent finish the job?">
+  <meta property="og:description" content="A free checker for Gorgias exports: what your AI agent closed alone, what it handed back, and which closes were post-purchase exceptions. Runs in your browser.">
+  <meta property="og:image" content="https://closewellhq.com/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "AI support checker",
+    "url": "https://closewellhq.com/check/",
+    "description": "Counts how many Gorgias tickets your AI agent closed on its own, how many it handed back to your team, and how many of its closes were post-purchase exceptions that need an action outside the helpdesk. Runs entirely in the browser; the file never leaves your computer.",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Any (modern web browser)",
+    "browserRequirements": "Requires JavaScript",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "license": "https://opensource.org/licenses/MIT",
+    "dateModified": "2026-11-15",
+    "publisher": { "@type": "Organization", "name": "Closewell", "url": "https://closewellhq.com/" }
+  }
+  </script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="logo" href="/" aria-label="Closewell home">
+        <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path d="M50.8 38.8A20 20 0 1 1 46.1 17.9" fill="none" stroke="#0E1A26" stroke-width="7" stroke-linecap="round"/><path d="M22 31.5L29.5 39L46.1 17.9" fill="none" stroke="#15A06A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="logo-word">closewell</span>
+      </a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="wrap intro" aria-labelledby="title">
+      <p class="eyebrow">Free checker for Gorgias</p>
+      <h1 class="h1" id="title">Did your AI support agent finish the job?</h1>
+      <p class="lead">Drop in a ticket export from Gorgias. In a minute you'll see how many tickets your AI agent closed on its own, how many it handed back to your team, and how many were claims, order changes or return exceptions that need work outside your helpdesk.</p>
+    </section>
+
+    <section class="wrap" id="check" aria-labelledby="check-title">
+      <h2 class="visually-hidden" id="check-title">Check your export</h2>
+      <noscript><p class="notice">This checker needs JavaScript. It runs entirely in your browser, so nothing is sent anywhere, but it can't run with JavaScript turned off.</p></noscript>
+
+      <div class="drop" id="drop">
+        <input class="visually-hidden" type="file" id="file" accept=".csv,text/csv">
+        <label class="drop-label" for="file">
+          <span class="drop-title">Drop your Gorgias CSV here</span>
+          <span class="drop-sub">or <span class="drop-link">choose a file</span></span>
+        </label>
+        <p class="mobile-note">Use a laptop for this step: ticket exports are big.</p>
+      </div>
+      <p class="privacy-line"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Runs in your browser. Your file never leaves your computer: no upload, no account, no tracking. <a href="https://github.com/maxtechstack/ai-support-checker">The code is open source.</a></span></p>
+
+      <div class="status" id="status" role="status" aria-live="polite" hidden>
+        <p id="status-text">Reading your file…</p>
+        <progress id="progress" max="100" value="0">0%</progress>
+      </div>
+
+      <div class="notice error" id="error" role="alert" hidden>
+        <p class="error-title" id="error-title"></p>
+        <p id="error-body"></p>
+        <div id="error-headers" hidden>
+          <p class="small"><strong>Columns found in your file:</strong> <span id="error-found"></span></p>
+          <p class="small"><strong>Columns the checker reads:</strong> <span id="error-expected"></span></p>
+          <p class="small">You can send us the header row only (never the data) and we'll add support: <a href="mailto:maksat@closewellhq.com?subject=Checker%20header%20row">maksat@closewellhq.com</a>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap howto" id="how-to-export" aria-labelledby="howto-title">
+      <h2 class="h3" id="howto-title">How to export from Gorgias</h2>
+      <ol class="steps">
+        <li><span class="step-n" aria-hidden="true">1</span><p>In Gorgias, open <strong>Inbox</strong> and click <strong>All</strong> under <strong>Default views</strong>. To check only the AI Agent's tickets, use <strong>Shared views › AI Agent › All</strong> instead.</p></li>
+        <li><span class="step-n" aria-hidden="true">2</span><p>Tick the checkbox at the top of the ticket list so it says <strong>All selected</strong>. If Gorgias offers to select every ticket in the view, take that too.</p></li>
+        <li><span class="step-n" aria-hidden="true">3</span><p>Click the <strong>three dots</strong> next to it, then <strong>Export tickets</strong>. Gorgias emails you a link to the CSV; it works for 14 days.</p></li>
+      </ol>
+    </section>
+
+    <section class="result" id="result" aria-labelledby="result-title" hidden>
+      <div class="wrap">
+        <h2 class="h2" id="result-title">Your result</h2>
+        <div id="headline" class="headline"></div>
+        <ul class="notes" id="notes"></ul>
+
+        <div class="table-wrap" id="table-wrap">
+          <table class="cats">
+            <caption>AI-handled tickets by category. Categories marked “needs action” need work outside your helpdesk.</caption>
+            <thead>
+              <tr><th scope="col">Category</th><th scope="col">AI-handled</th><th scope="col">Closed by AI</th><th scope="col">Handed back</th><th scope="col">Still open or snoozed</th><th scope="col">Share of AI-handled</th></tr>
+            </thead>
+            <tbody id="cat-rows"></tbody>
+            <tfoot id="cat-foot"></tfoot>
+          </table>
+          <p class="small muted">Under 20 tickets in a category: count only, no percentage. “Handed back” includes tickets where AI Agent replied first and then handed over. “Still open or snoozed” includes tickets AI Agent closed that were opened again. Each row adds up.</p>
+        </div>
+
+        <aside class="box cant" aria-labelledby="cant-title">
+          <h3 class="h3" id="cant-title">What this can't tell you</h3>
+          <ul>
+            <li>Whether the refund, reship or 3PL change actually happened. That lives in Shopify, your 3PL and your carrier, not in the ticket.</li>
+            <li>Exact categories. It's a keyword estimate; check a few tickets per category yourself.</li>
+            <li>What the leftovers cost you. That needs your own handle times and hourly cost.</li>
+          </ul>
+        </aside>
+
+        <aside class="box cta" aria-labelledby="cta-title">
+          <h3 class="h3" id="cta-title">The checker counts. The audit checks.</h3>
+          <p>The audit checks what actually got done in Shopify, your 3PL and your carrier, and what the leftovers cost. Read-only, 3 working days.</p>
+          <p class="cta-buttons">
+            <a class="btn btn-ghost" href="/sample-report/" target="_blank" rel="noopener">See a sample report</a>
+            <a class="btn btn-primary" href="/check/next/" target="_blank" rel="noopener">Book an audit</a>
+          </p>
+          <!-- Remove this line once the five free-review slots are taken (same rule as the site's design-partner section, T058). -->
+          <p class="free-review">Free for five Shopify brands this December: a review of your Black Friday tickets, delivered Dec 2–18.</p>
+        </aside>
+
+        <p class="actions">
+          <button class="btn btn-ghost" type="button" id="copy">Copy summary</button>
+          <button class="btn btn-ghost" type="button" id="print">Print / save as PDF</button>
+          <button class="btn btn-link" type="button" id="again">Check another file</button>
+          <span class="small muted" id="copy-status" role="status" aria-live="polite"></span>
+        </p>
+
+        <details class="counted" id="counted">
+          <summary>How we counted</summary>
+          <div id="counted-body"></div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Last updated <time datetime="2026-11-15">November 15, 2026</time> · <a href="https://github.com/maxtechstack/ai-support-checker">Open source on GitHub</a> · Made by <a href="/">Closewell</a></p>
+    </div>
+  </footer>
+</body>
+</html>

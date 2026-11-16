@@ -1,0 +1,19 @@
+{
+  "code": "missing_headers",
+  "found": [
+    "Ticket ID",
+    "Subject",
+    "Status"
+  ],
+  "missing": [
+    "Tags"
+  ],
+  "expected": [
+    "Ticket id",
+    "Tags",
+    "Subject",
+    "Closed date",
+    "Ticket Field: AI Agent Outcome",
+    "Ticket Field: Contact reason"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "$comment": "How the checker reads a Gorgias view export. Edit this file, then run `npm run rules` so the page and the CLI pick it up. Header names and AI Agent tags come from a Gorgias trial account (Nov 2, 2026) and the Gorgias docs. Anything marked UNVERIFIED has not been seen in a real export with AI Agent traffic.",
+  "version": "2026-11-16.1",
+  "headers": {
+    "ticketId": { "names": ["Ticket id"], "required": true },
+    "tags": { "names": ["Tags"], "required": true },
+    "subject": { "names": ["Subject"], "required": false },
+    "closedAt": { "names": ["Closed date"], "required": false },
+    "aiOutcomeField": { "names": ["Ticket Field: AI Agent Outcome"], "required": false, "note": "Values UNVERIFIED." },
+    "contactReason": { "names": ["Ticket Field: Contact reason"], "required": false, "note": "Account-specific dropdown; used as extra text for categories. UNVERIFIED in real data." },
+    "firstMessage": { "names": [], "required": false, "note": "A view export has no message text. Left empty until a real export with a first-message column is seen." }
+  },
+  "tagSeparator": ",",
+  "tagSeparatorNote": "UNVERIFIED: commas assumed, as in the Closewell importer.",
+  "ai": {
+    "closeTags": ["ai_close"],
+    "handoverTags": ["ai_handover"],
+    "otherTags": ["ai_snooze", "ai_processing", "ai_answered"],
+    "ignoreTags": ["ai_ignore"],
+    "notes": {
+      "ai_close": "AI Agent resolved the ticket on its own (Gorgias docs).",
+      "ai_handover": "AI Agent handed the ticket to the team. Wins over ai_close: a handover means a human got the ticket.",
+      "ai_snooze": "AI Agent snoozed the ticket waiting for the customer.",
+      "ai_processing": "AI Agent is still working on the ticket.",
+      "ai_answered": "UNVERIFIED on the trial; in the Gorgias docs. AI replied but neither closed nor handed over.",
+      "ai_ignore": "AI Agent skipped the ticket (a rule told it not to answer). Not counted as AI-handled."
+    },
+    "outcomeField": {
+      "note": "UNVERIFIED guess at 'AI Agent Outcome' values, used only when a ticket has no AI tag.",
+      "closeWords": ["close", "resolv", "automat"],
+      "handoverWords": ["handover", "hand over", "handoff"]
+    }
+  }
+}

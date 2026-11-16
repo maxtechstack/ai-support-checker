@@ -1,0 +1,117 @@
+{
+  "resultVersion": 1,
+  "rulesVersion": {
+    "gorgias": "2026-11-16.1",
+    "categories": "2026-11-16.1"
+  },
+  "rows": {
+    "read": 3000,
+    "counted": 3000,
+    "skipped": {
+      "empty_row": 0,
+      "column_count": 0,
+      "no_ticket_id": 0,
+      "duplicate_ticket_id": 0
+    }
+  },
+  "headers": {
+    "used": {
+      "ticketId": "Ticket id",
+      "tags": "Tags",
+      "subject": "Subject",
+      "closedAt": "Closed date",
+      "aiOutcomeField": "Ticket Field: AI Agent Outcome",
+      "contactReason": "Ticket Field: Contact reason"
+    },
+    "missingOptional": []
+  },
+  "tickets": 3000,
+  "humanOnly": 1167,
+  "ai": {
+    "handled": 1833,
+    "closed": 917,
+    "handedBack": 773,
+    "open": 143,
+    "bothCloseAndHandover": 83,
+    "closeTagButOpen": 36,
+    "fieldOnly": 32
+  },
+  "exceptionsClosedByAi": 435,
+  "categories": [
+    {
+      "id": "damage_missing_wrong",
+      "label": "Damaged, missing or wrong item",
+      "needsBackendAction": true,
+      "aiHandled": 205,
+      "aiClosed": 92,
+      "handedBack": 97,
+      "aiOpen": 16,
+      "humanOnly": 139
+    },
+    {
+      "id": "order_change",
+      "label": "Order change or cancellation",
+      "needsBackendAction": true,
+      "aiHandled": 191,
+      "aiClosed": 101,
+      "handedBack": 75,
+      "aiOpen": 15,
+      "humanOnly": 117
+    },
+    {
+      "id": "return_exchange",
+      "label": "Return, exchange or refund",
+      "needsBackendAction": true,
+      "aiHandled": 250,
+      "aiClosed": 120,
+      "handedBack": 106,
+      "aiOpen": 24,
+      "humanOnly": 178
+    },
+    {
+      "id": "warranty",
+      "label": "Warranty or faulty product",
+      "needsBackendAction": true,
+      "aiHandled": 96,
+      "aiClosed": 45,
+      "handedBack": 36,
+      "aiOpen": 15,
+      "humanOnly": 49
+    },
+    {
+      "id": "subscription",
+      "label": "Subscription change",
+      "needsBackendAction": true,
+      "aiHandled": 140,
+      "aiClosed": 77,
+      "handedBack": 58,
+      "aiOpen": 5,
+      "humanOnly": 105
+    },
+    {
+      "id": "wismo",
+      "label": "Where is my order",
+      "needsBackendAction": false,
+      "aiHandled": 555,
+      "aiClosed": 283,
+      "handedBack": 237,
+      "aiOpen": 35,
+      "humanOnly": 336
+    },
+    {
+      "id": "other",
+      "label": "Everything else",
+      "needsBackendAction": false,
+      "aiHandled": 396,
+      "aiClosed": 199,
+      "handedBack": 164,
+      "aiOpen": 33,
+      "humanOnly": 243
+    }
+  ],
+  "notes": {
+    "noAiTickets": false,
+    "smallSample": false,
+    "cameBackAvailable": false
+  }
+}

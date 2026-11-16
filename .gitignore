@@ -1,0 +1,17 @@
+# Internal documents, never push
+local/
+
+# IDE
+.idea/
+
+# Build output and deps
+dist/
+node_modules/
+
+# Large synthetic sample: regenerate with `npm run samples`
+samples/gorgias-50000.csv
+samples/out.csv
+
+# Playwright output
+test-results/
+playwright-report/
