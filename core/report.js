@@ -46,6 +46,8 @@ export function headlineText(r) {
     .join(" ");
 }
 
+/** Shown under the headline, in Copy summary, in print and in the CLI. Rules are not yet checked on real AI Agent traffic. */
+export const ESTIMATE_LINE = "Checker v1 · estimates from tags and keywords, not a ticket-by-ticket review.";
 export const CAME_BACK_NOTE =
   "Your export doesn't show whether customers came back after an AI close, so we don't count it.";
 export const NO_AI_TITLE = "We found no tickets handled by Gorgias AI Agent in this export.";
@@ -84,7 +86,7 @@ export function summaryText(r) {
     lines.push(`Tickets in the export: ${fmt(r.tickets)}`, NO_AI_TITLE);
     return lines.join("\n");
   }
-  lines.push(headlineText(r), CAME_BACK_NOTE);
+  lines.push(headlineText(r), ESTIMATE_LINE, CAME_BACK_NOTE);
   if (r.notes.smallSample) lines.push(SMALL_SAMPLE_NOTE);
   lines.push("", "By category (AI-handled / closed by AI / handed back / still open or snoozed / share of AI-handled):");
   for (const row of categoryRows(r)) {

@@ -1,7 +1,7 @@
 // Page logic. The file is read by worker.js; this side only ever receives counts.
 // Everything is written with textContent: no ticket text reaches the DOM.
 import {
-  CAME_BACK_NOTE, NO_AI_BODY, NO_AI_TITLE, SMALL_SAMPLE_NOTE, SKIP_REASONS,
+  CAME_BACK_NOTE, ESTIMATE_LINE, NO_AI_BODY, NO_AI_TITLE, SMALL_SAMPLE_NOTE, SKIP_REASONS,
   categoryRows, fmt, headlineParts, summaryText,
 } from "../core/report.js";
 import { RULES } from "../core/rules-data.js";
@@ -110,10 +110,13 @@ function render(r) {
     headline.append(el("p", {}, [String(NO_AI_TITLE)]));
     notes.append(el("li", {}, [String(NO_AI_BODY)]), el("li", {}, [`Tickets in the export: ${fmt(r.tickets)}.`]));
     show("table-wrap", false);
+    show("estimate", false);
   } else {
     for (const sentence of headlineParts(r)) {
       headline.append(...sentence.map((p) => (typeof p === "string" ? p : el("strong", {}, [fmt(p.n)]))), " ");
     }
+    $("estimate").textContent = ESTIMATE_LINE;
+    show("estimate", true);
     notes.append(el("li", {}, [String(CAME_BACK_NOTE)]));
     if (r.notes.smallSample) notes.append(el("li", { class: "warn" }, [String(SMALL_SAMPLE_NOTE)]));
     if (r.ai.open) notes.append(el("li", {}, [`${fmt(r.ai.open)} AI-handled tickets were neither closed by AI nor handed back (still open, snoozed, or closed by AI and opened again).`]));

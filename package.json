@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Count what your AI support agent closed alone, handed back, and which closes were post-purchase exceptions. Runs in your browser; your file never leaves your computer.",
   "license": "MIT",
+  "author": "Maksat Mamytov (Closewell)",
   "private": true,
   "type": "module",
   "bin": {

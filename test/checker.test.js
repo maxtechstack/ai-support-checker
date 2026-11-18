@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createChecker, createRowFeed, RULES, categoryRows, headlineText, mapHeaders, percent, summaryText } from "../core/index.js";
+import { createChecker, createRowFeed, ESTIMATE_LINE, RULES, categoryRows, headlineText, mapHeaders, percent, summaryText } from "../core/index.js";
 
 const H = ["Ticket id", "Tags", "Subject", "Closed date"];
 
@@ -89,4 +89,14 @@ test("the result holds counts only: no strings from the file except header names
   assert.ok(!json.includes("Secret"));
   assert.ok(!json.includes("jane@example.com"));
   assert.ok(!json.includes("123456"));
+});
+
+test("summary carries the v1 estimates line right after the headline", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { checkFile } = await import("../cli/check.js");
+  const r = await checkFile(new URL("../samples/edge/gorgias-small.csv", import.meta.url).pathname);
+  const lines = summaryText(/** @type {any} */ (r)).split("\n");
+  assert.equal(lines[2], headlineText(/** @type {any} */ (r)));
+  assert.equal(lines[3], ESTIMATE_LINE);
+  assert.match(readFileSync(new URL("../web/index.html", import.meta.url), "utf8"), /id="headline"[^>]*><\/div>\s*<p class="small muted estimate" id="estimate"/);
 });
