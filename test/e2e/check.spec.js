@@ -67,6 +67,27 @@ test("page and CLI give identical numbers (Copy summary = CLI summary)", async (
   }
 });
 
+test("synthetic sample: download link, then drop it in, same numbers as the CLI", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  const { requests, violations } = await open(page);
+  const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#sample").click()]);
+  expect(download.suggestedFilename()).toBe("gorgias-3000.csv");
+  const saved = test.info().outputPath("gorgias-3000.csv");
+  await download.saveAs(saved);
+  expect(readFileSync(saved, "utf8")).toBe(readFileSync(samples["gorgias-3000"], "utf8"));
+  // A browser download from the link (Chrome doesn't report it as a page request), not a fetch from page code.
+  expect(new URL(download.url()).pathname).toBe("/check/sample/gorgias-3000.csv");
+  expect(requests).toEqual([]);
+  await drop(page, saved);
+  await expect(page.locator("#result")).toBeVisible();
+  expect(requests).toEqual([]);
+  expect(violations).toEqual([]);
+  await page.locator("#copy").click();
+  await expect(page.locator("#copy-status")).toHaveText("Summary copied.");
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toBe(summaryText(/** @type {any} */ (await checkFile(samples["gorgias-3000"]))));
+});
+
 test("50,000 tickets in under 10 seconds with the page responsive", async ({ page }) => {
   const { requests } = await open(page);
   await page.evaluate(() => {

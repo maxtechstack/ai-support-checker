@@ -37,3 +37,14 @@ test("the page writes file-derived values with textContent only", () => {
   const app = readFileSync(join(root, "web", "app.js"), "utf8");
   assert.doesNotMatch(app, /innerHTML|outerHTML|insertAdjacentHTML|document\.write/);
 });
+
+test("the sample is a plain same-origin download link, never fetched by page code", () => {
+  const html = readFileSync(join(root, "web", "index.html"), "utf8");
+  const link = html.match(/<a\b[^>]*\bid="sample"[^>]*>/)?.[0];
+  assert.ok(link, "sample link missing");
+  assert.match(link, /\bhref="sample\/gorgias-3000\.csv"/);
+  assert.match(link, /\bdownload(="[^"]*")?[\s>]/);
+  for (const f of files("web", ".js")) {
+    assert.doesNotMatch(readFileSync(f, "utf8"), /gorgias-3000|sample\//, `${f} references the sample`);
+  }
+});

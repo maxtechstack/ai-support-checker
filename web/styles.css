@@ -99,6 +99,9 @@ svg { display: block; }
 .mobile-note { display: none; margin: 0 24px 24px; padding: 12px 16px; border-radius: var(--radius-sm); background: var(--amber-tint); font-size: 15px; text-align: center; }
 @media (max-width: 767px), (pointer: coarse) and (max-width: 1024px) { .mobile-note { display: block; } .drop-label { padding: 40px 16px; } }
 
+.sample-line { margin-top: 12px; font-size: 15px; color: var(--muted); }
+.sample-line a { color: var(--green-text); font-weight: 600; }
+
 .privacy-line { display: flex; gap: 10px; align-items: flex-start; margin-top: 16px; font-size: 15px; color: var(--muted); }
 .privacy-line svg { width: 20px; height: 20px; flex: none; margin-top: 2px; color: var(--green-text); }
 .privacy-line a { color: var(--green-text); font-weight: 600; }

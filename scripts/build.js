@@ -26,4 +26,7 @@ for (const f of ["app.js", "worker.js"]) {
   if (text.includes("../core/")) throw new Error(`${f}: unexpected ../core/ reference`);
   writeFileSync(p, text);
 }
+// The synthetic sample the page links to ("No export handy?"). A plain download link, never fetched by page code.
+mkdirSync(join(out, "sample"));
+cpSync(join(root, "samples", "gorgias-3000.csv"), join(out, "sample", "gorgias-3000.csv"));
 console.log("built dist/check/");
