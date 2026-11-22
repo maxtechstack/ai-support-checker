@@ -1,8 +1,8 @@
 {
-  "resultVersion": 1,
+  "resultVersion": 2,
   "rulesVersion": {
-    "gorgias": "2026-11-16.1",
-    "categories": "2026-11-16.1"
+    "gorgias": "2026-11-22.1",
+    "categories": "2026-11-22.1"
   },
   "rows": {
     "read": 120,
@@ -21,6 +21,9 @@
       "subject": "Subject",
       "closedAt": "Closed date",
       "aiOutcomeField": "Ticket Field: AI Agent Outcome",
+      "aiIntent": "Ticket Field: AI Intent",
+      "resolution": "Ticket Field: Resolution",
+      "customerMessages": "Number of customer messages",
       "contactReason": "Ticket Field: Contact reason"
     },
     "missingOptional": []
@@ -34,9 +37,28 @@
     "open": 4,
     "bothCloseAndHandover": 1,
     "closeTagButOpen": 0,
-    "fieldOnly": 1
+    "fieldOnly": 1,
+    "categoryFromIntent": 63,
+    "actionDone": 2,
+    "actionFailed": 1,
+    "noActionRecorded": 44
   },
   "exceptionsClosedByAi": 31,
+  "exceptionActions": {
+    "actionDone": 2,
+    "actionFailed": 1,
+    "noActionRecorded": 28
+  },
+  "exceptionResolution": {
+    "columnPresent": true,
+    "filled": 31,
+    "action": 2,
+    "informationOnly": 29,
+    "other": 0,
+    "actionValues": {
+      "Order::Updated Information": 2
+    }
+  },
   "categories": [
     {
       "id": "damage_missing_wrong",
@@ -44,6 +66,7 @@
       "needsBackendAction": true,
       "aiHandled": 12,
       "aiClosed": 7,
+      "aiActionDone": 0,
       "handedBack": 4,
       "aiOpen": 1,
       "humanOnly": 4
@@ -54,6 +77,7 @@
       "needsBackendAction": true,
       "aiHandled": 5,
       "aiClosed": 4,
+      "aiActionDone": 2,
       "handedBack": 1,
       "aiOpen": 0,
       "humanOnly": 4
@@ -64,6 +88,7 @@
       "needsBackendAction": true,
       "aiHandled": 15,
       "aiClosed": 11,
+      "aiActionDone": 0,
       "handedBack": 2,
       "aiOpen": 2,
       "humanOnly": 9
@@ -74,6 +99,7 @@
       "needsBackendAction": true,
       "aiHandled": 4,
       "aiClosed": 3,
+      "aiActionDone": 0,
       "handedBack": 1,
       "aiOpen": 0,
       "humanOnly": 1
@@ -84,6 +110,7 @@
       "needsBackendAction": true,
       "aiHandled": 8,
       "aiClosed": 6,
+      "aiActionDone": 0,
       "handedBack": 2,
       "aiOpen": 0,
       "humanOnly": 3
@@ -94,6 +121,7 @@
       "needsBackendAction": false,
       "aiHandled": 20,
       "aiClosed": 12,
+      "aiActionDone": 0,
       "handedBack": 7,
       "aiOpen": 1,
       "humanOnly": 17
@@ -104,6 +132,7 @@
       "needsBackendAction": false,
       "aiHandled": 8,
       "aiClosed": 4,
+      "aiActionDone": 0,
       "handedBack": 4,
       "aiOpen": 0,
       "humanOnly": 10

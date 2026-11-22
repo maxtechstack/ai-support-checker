@@ -4,18 +4,22 @@ import { classifyTicket, splitTags } from "./classify.js";
 import { expectedHeaders, mapHeaders } from "./headers.js";
 import { compileRules } from "./rules.js";
 
-export const RESULT_VERSION = 1;
+export const RESULT_VERSION = 2;
 
 /**
  * @typedef {{ id: string, label: string, needsBackendAction: boolean, aiHandled: number, aiClosed: number,
- *   handedBack: number, aiOpen: number, humanOnly: number }} CategoryCounts
+ *   aiActionDone: number, handedBack: number, aiOpen: number, humanOnly: number }} CategoryCounts
+ * @typedef {{ actionDone: number, actionFailed: number, noActionRecorded: number }} ActionCounts
+ * @typedef {{ columnPresent: boolean, filled: number, action: number, informationOnly: number, other: number,
+ *   actionValues: Record<string, number> }} ResolutionCounts
  * @typedef {{ resultVersion: number, rulesVersion: { gorgias: string, categories: string },
  *   rows: { read: number, counted: number, skipped: Record<string, number> },
  *   headers: { used: Record<string, string>, missingOptional: string[] },
  *   tickets: number, humanOnly: number,
  *   ai: { handled: number, closed: number, handedBack: number, open: number, bothCloseAndHandover: number,
- *         closeTagButOpen: number, fieldOnly: number },
- *   exceptionsClosedByAi: number, categories: CategoryCounts[],
+ *         closeTagButOpen: number, fieldOnly: number, categoryFromIntent: number } & ActionCounts,
+ *   exceptionsClosedByAi: number, exceptionActions: ActionCounts, exceptionResolution: ResolutionCounts,
+ *   categories: CategoryCounts[],
  *   notes: { noAiTickets: boolean, smallSample: boolean, cameBackAvailable: boolean } }} CheckResult
  * @typedef {{ code: "missing_headers", found: string[], missing: string[], expected: string[] }
  *   | { code: "empty" } | { code: "not_csv" }} CheckError
@@ -35,9 +39,15 @@ export function createChecker(ruleFiles) {
   const seen = new Set();
   const skipped = { empty_row: 0, column_count: 0, no_ticket_id: 0, duplicate_ticket_id: 0 };
   let read = 0;
-  const ai = { handled: 0, closed: 0, handedBack: 0, open: 0, bothCloseAndHandover: 0, closeTagButOpen: 0, fieldOnly: 0 };
+  const ai = {
+    handled: 0, closed: 0, handedBack: 0, open: 0, bothCloseAndHandover: 0, closeTagButOpen: 0, fieldOnly: 0,
+    categoryFromIntent: 0, actionDone: 0, actionFailed: 0, noActionRecorded: 0,
+  };
   let humanOnly = 0;
   let exceptionsClosedByAi = 0;
+  const exceptionActions = { actionDone: 0, actionFailed: 0, noActionRecorded: 0 };
+  const exceptionResolution = { columnPresent: false, filled: 0, action: 0, informationOnly: 0, other: 0, actionValues: /** @type {Record<string, number>} */ ({}) };
+  const ACTION_KEY = { action_done: "actionDone", action_failed: "actionFailed", no_action_recorded: "noActionRecorded" };
   /** @type {Map<string, CategoryCounts>} */
   const cats = new Map(
     ruleFiles.categories.priority.map((id) => [
@@ -46,7 +56,7 @@ export function createChecker(ruleFiles) {
         id,
         label: ruleFiles.categories.labels[id] ?? id,
         needsBackendAction: ruleFiles.categories.needsBackendAction.includes(id),
-        aiHandled: 0, aiClosed: 0, handedBack: 0, aiOpen: 0, humanOnly: 0,
+        aiHandled: 0, aiClosed: 0, aiActionDone: 0, handedBack: 0, aiOpen: 0, humanOnly: 0,
       },
     ]),
   );
@@ -61,6 +71,7 @@ export function createChecker(ruleFiles) {
       if (!map.ok) {
         return { code: "missing_headers", found: map.found, missing: map.missingRequired, expected: expectedHeaders(ruleFiles.gorgias) };
       }
+      exceptionResolution.columnPresent = map.index.resolution !== undefined;
       return null;
     },
 
@@ -84,6 +95,8 @@ export function createChecker(ruleFiles) {
           closed: idx.closedAt === undefined ? null : cell("closedAt").trim() !== "",
           aiField: cell("aiOutcomeField"),
           extraText: `${cell("contactReason")}\n${cell("firstMessage")}`,
+          aiIntent: cell("aiIntent"),
+          resolution: cell("resolution"),
         },
         rules,
       );
@@ -98,10 +111,25 @@ export function createChecker(ruleFiles) {
       if (c.flags.bothCloseAndHandover) ai.bothCloseAndHandover++;
       if (c.flags.closeTagButOpen) ai.closeTagButOpen++;
       if (c.flags.fieldOnly) ai.fieldOnly++;
+      if (c.flags.categoryFromIntent) ai.categoryFromIntent++;
       if (c.outcome === "ai_closed") {
         ai.closed++;
         cat.aiClosed++;
-        if (c.needsBackendAction) exceptionsClosedByAi++;
+        const key = ACTION_KEY[/** @type {string} */ (c.action)];
+        ai[key]++;
+        if (c.action === "action_done") cat.aiActionDone++;
+        if (c.needsBackendAction) {
+          exceptionsClosedByAi++;
+          exceptionActions[key]++;
+          const res = c.resolution;
+          if (res.kind !== "empty") exceptionResolution.filled++;
+          if (res.kind === "action") {
+            exceptionResolution.action++;
+            const v = res.value ?? "?";
+            exceptionResolution.actionValues[v] = (exceptionResolution.actionValues[v] ?? 0) + 1;
+          } else if (res.kind === "other") exceptionResolution.other++;
+          else exceptionResolution.informationOnly++; // Information Given, No action, or empty
+        }
       } else if (c.outcome === "handed_back") {
         ai.handedBack++;
         cat.handedBack++;
@@ -125,6 +153,8 @@ export function createChecker(ruleFiles) {
         humanOnly,
         ai: { ...ai },
         exceptionsClosedByAi,
+        exceptionActions: { ...exceptionActions },
+        exceptionResolution: { ...exceptionResolution, actionValues: { ...exceptionResolution.actionValues } },
         categories: [...cats.values()].map((c) => ({ ...c })),
         notes: { noAiTickets: ai.handled === 0, smallSample: ai.handled > 0 && ai.handled < SMALL_SAMPLE, cameBackAvailable: false },
       };

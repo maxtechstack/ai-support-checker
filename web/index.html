@@ -32,7 +32,7 @@
     "isAccessibleForFree": true,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
     "license": "https://opensource.org/licenses/MIT",
-    "dateModified": "2026-11-19",
+    "dateModified": "2026-11-22",
     "publisher": { "@type": "Organization", "name": "Closewell", "url": "https://closewellhq.com/" }
   }
   </script>
@@ -107,19 +107,21 @@
           <table class="cats">
             <caption>AI-handled tickets by category. Categories marked “needs action” need work outside your helpdesk.</caption>
             <thead>
-              <tr><th scope="col">Category</th><th scope="col">AI-handled</th><th scope="col">Closed by AI</th><th scope="col">Handed back</th><th scope="col">Still open or snoozed</th><th scope="col">Share of AI-handled</th></tr>
+              <tr><th scope="col">Category</th><th scope="col">AI-handled</th><th scope="col">Closed by AI</th><th scope="col">AI action recorded</th><th scope="col">Handed back</th><th scope="col">Still open or snoozed</th><th scope="col">Share of AI-handled</th></tr>
             </thead>
             <tbody id="cat-rows"></tbody>
             <tfoot id="cat-foot"></tfoot>
           </table>
-          <p class="small muted">Under 20 tickets in a category: count only, no percentage. “Handed back” includes tickets where AI Agent replied first and then handed over. “Still open or snoozed” includes tickets AI Agent closed that were opened again. Each row adds up.</p>
+          <p class="small resolution-line" id="resolution-line" hidden></p>
+          <p class="small muted">Under 20 tickets in a category: count only, no percentage. “AI action recorded” counts closes where AI Agent tagged a completed action in Shopify (ai_executed_action). “Handed back” includes tickets where AI Agent replied first and then handed over. “Still open or snoozed” includes tickets AI Agent closed that were opened again. Each row adds up.</p>
         </div>
 
         <aside class="box cant" aria-labelledby="cant-title">
           <h3 class="h3" id="cant-title">What this can't tell you</h3>
           <ul>
             <li>Whether the refund, reship or 3PL change actually happened. That lives in Shopify, your 3PL and your carrier, not in the ticket.</li>
-            <li>Exact categories. It's a keyword estimate; check a few tickets per category yourself.</li>
+            <li>Whether a refund, reship or 3PL change the AI started was finished outside Shopify.</li>
+            <li>Exact categories. It's an estimate from AI Intent, tags and keywords; check a few tickets per category yourself.</li>
             <li>What the leftovers cost you. That needs your own handle times and hourly cost.</li>
           </ul>
         </aside>
@@ -152,7 +154,7 @@
 
   <footer class="site-footer">
     <div class="wrap">
-      <p>Last updated <time datetime="2026-11-19">November 19, 2026</time> · <a href="https://github.com/maxtechstack/ai-support-checker">Open source on GitHub</a> · Made by <a href="/">Closewell</a></p>
+      <p>Last updated <time datetime="2026-11-22">November 22, 2026</time> · <a href="https://github.com/maxtechstack/ai-support-checker">Open source on GitHub</a> · Made by <a href="/">Closewell</a></p>
     </div>
   </footer>
 </body>

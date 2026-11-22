@@ -5,12 +5,17 @@
  * @typedef {{ names: string[], required: boolean, note?: string }} HeaderSpec
  * @typedef {{ version: string, headers: Record<string, HeaderSpec>, tagSeparator: string,
  *   ai: { closeTags: string[], handoverTags: string[], otherTags: string[], ignoreTags: string[],
- *         outcomeField: { closeWords: string[], handoverWords: string[] } } }} GorgiasRules
+ *         actionDoneTags: string[], actionFailedTags: string[],
+ *         outcomeField: { closePrefixes: string[], handoverPrefixes: string[], snoozePrefixes: string[] } },
+ *   resolution: { actionValues: string[], infoValues: string[] } }} GorgiasRules
  * @typedef {{ version: string, priority: string[], needsBackendAction: string[], labels: Record<string, string>,
- *   tags: Record<string, string[]>, keywords: Record<string, Record<string, string[] | boolean>> }} CategoryRules
+ *   tags: Record<string, string[]>, intents: Record<string, string[]>,
+ *   keywords: Record<string, Record<string, string[] | boolean>> }} CategoryRules
  * @typedef {{ gorgias: GorgiasRules, categories: CategoryRules,
- *   tagCategory: Map<string, string>, matchers: { category: string, re: RegExp }[],
- *   closeTags: Set<string>, handoverTags: Set<string>, otherTags: Set<string>, ignoreTags: Set<string> }} CompiledRules
+ *   tagCategory: Map<string, string>, intentCategory: Map<string, string>, matchers: { category: string, re: RegExp }[],
+ *   closeTags: Set<string>, handoverTags: Set<string>, otherTags: Set<string>, ignoreTags: Set<string>,
+ *   actionDoneTags: Set<string>, actionFailedTags: Set<string>,
+ *   resolutionAction: Set<string>, resolutionInfo: Set<string> }} CompiledRules
  */
 
 const LETTER = "[\\p{L}\\p{N}]";
@@ -38,6 +43,18 @@ export function keywordPattern(keyword) {
 }
 
 /**
+ * The first two levels of an AI Intent value, lowercased: "Order::Cancel::Other" → "order::cancel".
+ * @param {string} value
+ */
+export function intentKey(value) {
+  return normalizeText(value)
+    .split("::")
+    .map((p) => p.trim().replace(/\s+/g, " "))
+    .slice(0, 2)
+    .join("::");
+}
+
+/**
  * @param {GorgiasRules} gorgias
  * @param {CategoryRules} categories
  * @returns {CompiledRules}
@@ -47,6 +64,13 @@ export function compileRules(gorgias, categories) {
   for (const category of categories.priority) {
     for (const tag of categories.tags[category] || []) {
       if (!tagCategory.has(normalizeTag(tag))) tagCategory.set(normalizeTag(tag), category);
+    }
+  }
+  const intentCategory = new Map();
+  for (const category of categories.priority) {
+    for (const key of categories.intents?.[category] || []) {
+      const k = intentKey(key);
+      if (!intentCategory.has(k)) intentCategory.set(k, category);
     }
   }
   const matchers = [];
@@ -60,15 +84,21 @@ export function compileRules(gorgias, categories) {
       matchers.push({ category, re: new RegExp(words.map(keywordPattern).join("|"), "u") });
     }
   }
-  const set = (list) => new Set(list.map(normalizeTag));
+  const set = (list) => new Set((list || []).map(normalizeTag));
+  const values = (list) => new Set((list || []).map((v) => normalizeText(v).trim()));
   return {
     gorgias,
     categories,
     tagCategory,
+    intentCategory,
     matchers,
     closeTags: set(gorgias.ai.closeTags),
     handoverTags: set(gorgias.ai.handoverTags),
     otherTags: set(gorgias.ai.otherTags),
     ignoreTags: set(gorgias.ai.ignoreTags),
+    actionDoneTags: set(gorgias.ai.actionDoneTags),
+    actionFailedTags: set(gorgias.ai.actionFailedTags),
+    resolutionAction: values(gorgias.resolution?.actionValues),
+    resolutionInfo: values(gorgias.resolution?.infoValues),
   };
 }

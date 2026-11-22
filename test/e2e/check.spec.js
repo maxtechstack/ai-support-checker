@@ -56,7 +56,7 @@ test("3,000 tickets: result shown, zero requests while processing, no ticket tex
 test("page and CLI give identical numbers (Copy summary = CLI summary)", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await open(page);
-  for (const name of ["gorgias-3000", "gorgias-small", "messy", "gorgias-no-ai"]) {
+  for (const name of ["gorgias-3000", "gorgias-small", "messy", "gorgias-no-ai", "gorgias-ai-real-tags"]) {
     await drop(page, samples[name]);
     await expect(page.locator("#result")).toBeVisible();
     await page.locator("#copy").click();
@@ -160,4 +160,22 @@ test("without JavaScript the page says it needs it", async ({ request }) => {
   // Playwright's javaScriptEnabled:false is emulation: Chrome still parses <noscript> as raw text, so check the markup.
   const html = await (await request.get("/check/")).text();
   expect(html).toMatch(/<noscript>[^]*This checker needs JavaScript[^]*<\/noscript>/);
+});
+
+test("trial fixture (real AI Agent tags): zero requests, action sentence, action column, Resolution line", async ({ page }) => {
+  const { requests, violations } = await open(page);
+  await drop(page, samples["gorgias-ai-real-tags"]);
+  await expect(page.locator("#result")).toBeVisible();
+  await page.locator("#counted summary").click();
+  expect(requests).toEqual([]);
+  expect(violations).toEqual([]);
+  await expect(page.locator("#headline")).toContainText("The AI recorded a completed action in Shopify on 1 of them and a failed action on 0;");
+  await expect(page.locator("#resolution-line")).toHaveText("Resolution field on these closes: 1 action (Order::Cancelled), 1 information only.");
+  const orderChange = page.locator("#cat-rows tr", { hasText: "Order change" });
+  await expect(orderChange.locator("td").nth(2)).toHaveText("1");
+  await expect(page.locator("#counted-body")).toContainText("ai_executed_action");
+  await expect(page.locator("#counted-body")).toContainText("order::damaged");
+  await expect(page.locator("#counted-body")).toContainText("Rules version 2026-11-22.1");
+  const text = await page.locator("body").innerText();
+  for (const s of ["shopper1@example.com", "Shopper Two", "Ship to another country", "900003"]) expect(text).not.toContain(s);
 });

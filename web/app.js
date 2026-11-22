@@ -2,7 +2,7 @@
 // Everything is written with textContent: no ticket text reaches the DOM.
 import {
   CAME_BACK_NOTE, ESTIMATE_LINE, NO_AI_BODY, NO_AI_TITLE, SMALL_SAMPLE_NOTE, SKIP_REASONS,
-  categoryRows, fmt, headlineParts, summaryText,
+  categoryRows, fmt, headlineParts, resolutionLine, summaryText,
 } from "../core/report.js";
 import { RULES } from "../core/rules-data.js";
 
@@ -141,6 +141,7 @@ function renderTable(r) {
         name,
         el("td", {}, [fmt(row.aiHandled)]),
         el("td", {}, [fmt(row.aiClosed)]),
+        el("td", {}, [fmt(row.aiActionDone)]),
         el("td", {}, [fmt(row.handedBack)]),
         el("td", {}, [fmt(row.aiOpen)]),
         el("td", {}, [row.share ?? "–"]),
@@ -152,11 +153,15 @@ function renderTable(r) {
       el("th", { scope: "row" }, ["All AI-handled"]),
       el("td", {}, [fmt(r.ai.handled)]),
       el("td", {}, [fmt(r.ai.closed)]),
+      el("td", {}, [fmt(r.ai.actionDone)]),
       el("td", {}, [fmt(r.ai.handedBack)]),
       el("td", {}, [fmt(r.ai.open)]),
       el("td", {}, ["100%"]),
     ]),
   );
+  const resolution = resolutionLine(r);
+  $("resolution-line").textContent = resolution ?? "";
+  show("resolution-line", Boolean(resolution));
 }
 
 function dl(pairs) {
@@ -173,12 +178,17 @@ function renderCounted(r) {
 
   const cats = el("ul", { class: "rules" });
   for (const id of c.priority) {
-    if (id === "other") continue;
+    const intents = (c.intents?.[id] ?? []).join(", ");
+    if (id === "other") {
+      if (intents) cats.append(el("li", {}, [el("strong", {}, [c.labels[id]]), el("p", { class: "small" }, [`AI Intent: ${intents}`])]));
+      continue;
+    }
     const en = c.keywords.en?.[id] ?? [];
     const others = Object.entries(c.keywords).filter(([lang]) => lang !== "en").map(([lang, k]) => `${lang}: ${(k[id] ?? []).join(", ")}`);
     cats.append(
       el("li", {}, [
         el("strong", {}, [c.labels[id]]),
+        el("p", { class: "small" }, [`AI Intent: ${intents || "none"}`]),
         el("p", { class: "small" }, [`Tags: ${(c.tags[id] ?? []).join(", ")}`]),
         el("p", { class: "small" }, [`Keywords (English): ${en.join(", ")}`]),
         el("p", { class: "small muted" }, [`Basic lists: ${others.join(" · ")}`]),
@@ -196,16 +206,22 @@ function renderCounted(r) {
       ["Optional columns not in your file", r.headers.missingOptional.join(", ") || "none"],
     ]),
     el("h4", {}, ["AI-handled tickets"]),
-    el("p", { class: "small" }, ["A ticket counts as AI-handled when it has one of the AI Agent tags below, or a value in the “AI Agent Outcome” ticket field. A ticket with both ai_close and ai_handover counts as handed back, because a human got it."]),
+    el("p", { class: "small" }, ["A ticket counts as AI-handled when it has one of the AI Agent tags below, or a value in the “AI Agent Outcome” ticket field (Close::, Handover:: or Snooze::, used only when there is no AI tag). A ticket with both ai_close and ai_handover counts as handed back, because a human got it. A snoozed ticket counts as still open, even though Gorgias exports it with a Closed date."]),
     el("ul", { class: "small" }, [...tagList([...g.ai.closeTags, ...g.ai.handoverTags, ...g.ai.otherTags, ...g.ai.ignoreTags])].map((t) => el("li", {}, [t]))),
+    el("p", { class: "small" }, ["Action tags, read on tickets the AI closed alone:"]),
+    el("ul", { class: "small" }, [...tagList([...(g.ai.actionDoneTags ?? []), ...(g.ai.actionFailedTags ?? [])])].map((t) => el("li", {}, [t]))),
     dl([
       ["Both ai_close and ai_handover", fmt(r.ai.bothCloseAndHandover)],
       ["ai_close but open again now", fmt(r.ai.closeTagButOpen)],
       ["Counted from the AI Agent Outcome field only", fmt(r.ai.fieldOnly)],
+      ["Closed by AI with a completed action recorded", fmt(r.ai.actionDone)],
+      ["Closed by AI with a failed action recorded", fmt(r.ai.actionFailed)],
+      ["Closed by AI with no action recorded", fmt(r.ai.noActionRecorded)],
+      ["Category from the AI Intent field", fmt(r.ai.categoryFromIntent)],
       ["Tickets without AI involvement", fmt(r.humanOnly)],
     ]),
     el("h4", {}, ["Categories"]),
-    el("p", { class: "small" }, ["Matched on the subject, the tags and the contact reason, lowercase and whole words. A ticket gets the first match in this order. “Where is my order” is its own bucket and is not counted as an exception."]),
+    el("p", { class: "small" }, ["When the “AI Intent” ticket field is filled and its first two levels are listed below, that decides the category. Otherwise the subject, the tags and the contact reason are matched, lowercase and whole words, and a ticket gets the first match in this order. “Where is my order” is its own bucket and is not counted as an exception."]),
     cats,
     el("p", { class: "small" }, [
       `Rules version ${g.version === c.version ? g.version : `${g.version} (tickets) / ${c.version} (categories)`}. Edit them in `,

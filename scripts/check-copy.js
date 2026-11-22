@@ -9,7 +9,8 @@ const AVOID = [
   [/deflect/i, "deflected / deflection"],
   [/warehouse/i, "warehouse (say 3PL)"],
   [/chargeback/i, "chargebacks as an offer"],
-  [/\bfail(s|ed|ure|ing)?\b/i, "the AI 'failed' (say handed back / closed without a human)"],
+  // "a failed action" is Gorgias's own ai_failed_action tag (an action that couldn't complete), not a verdict on the AI.
+  [/\bfail(s|ed|ure|ing)?\b(?!\s+action)/i, "the AI 'failed' (say handed back / closed without a human)"],
   [/every vendor bills|vendors? bills? (every|all) give-?ups?/i, "claim that every vendor bills give-ups"],
 ];
 const FILES = [

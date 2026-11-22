@@ -43,19 +43,32 @@ How to get the export: [docs/how-to-export-from-gorgias.md](docs/how-to-export-f
 ## How it counts
 
 - **AI-handled:** the ticket has a Gorgias AI Agent tag (`ai_close`, `ai_handover`, `ai_snooze`, `ai_processing`,
-  `ai_answered`) or a value in the "AI Agent Outcome" ticket field. `ai_ignore` alone doesn't count.
+  `ai_answered`, `ai_executed_action`, `ai_failed_action`) or a value in the "AI Agent Outcome" ticket field
+  (`Close::`, `Handover::` or `Snooze::`, used only when there is no AI tag). `ai_ignore` alone doesn't count.
 - **Closed by AI:** `ai_close` and the ticket is closed. **Handed back:** `ai_handover` (it wins over `ai_close`).
-- **Customers who came back** after an AI close aren't counted: a view export doesn't show it.
-- **Categories:** keyword and tag rules on the subject, tags and contact reason; English plus basic German, French,
+  `ai_answered` sits next to every outcome and is never an outcome by itself. **Snoozed** (`ai_snooze`) counts as
+  still open, even though Gorgias exports snoozed tickets with a Closed date.
+- **Action recorded:** on tickets the AI closed alone, `ai_executed_action` means it completed an action in Shopify
+  and `ai_failed_action` means an action couldn't complete. The "Resolution" ticket field, when filled, is shown as
+  context only. Neither shows whether a refund, reship or 3PL change was finished outside Shopify.
+- **Customers who came back** after an AI close aren't counted: Gorgias removes `ai_close` when a ticket reopens, so
+  the export shows only the last state.
+- **Categories:** the "AI Intent" ticket field when its first two levels are in the rules (e.g. `order::damaged`);
+  otherwise keyword and tag rules on the subject, tags and contact reason, with English plus basic German, French,
   Spanish and Dutch lists. A ticket gets the first match in priority order. It's an estimate.
+
+The AI Agent tags, the "AI Agent Outcome" values and the tag separator were checked on Nov 22, 2026 with 5 tickets
+on a Gorgias trial connected to a Shopify development store
+([`samples/edge/gorgias-ai-real-tags.csv`](samples/edge/gorgias-ai-real-tags.csv), anonymized).
 
 ## Change the rules
 
 All rules live in two files:
 
-- [`rules/gorgias.json`](rules/gorgias.json): header names and AI Agent tags.
-- [`rules/categories.json`](rules/categories.json): keywords per category and language, and tags that map to a
-  category.
+- [`rules/gorgias.json`](rules/gorgias.json): header names, AI Agent tags (outcome and action tags), the
+  "AI Agent Outcome" prefixes and the "Resolution" values.
+- [`rules/categories.json`](rules/categories.json): AI Intent values, keywords per category and language, and tags
+  that map to a category.
 
 After editing, run `npm run rules` (writes `core/rules-data.js`, which the page loads), then `npm test`. If the
 results change on purpose, `npm run golden` updates the expected outputs; review the diff.

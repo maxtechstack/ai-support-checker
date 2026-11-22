@@ -10,14 +10,27 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-// Header row of a Gorgias view export (trial account, Nov 2, 2026), plus two ticket fields and a customer field.
+// Header row of a Gorgias view export with AI Agent on (trial account, Nov 22, 2026).
 export const HEADERS = [
   "Ticket id", "Tags", "Channel", "Priority", "Last used integration name", "Last used integration type",
   "Created by an agent", "Subject", "Creation date", "Closed date", "Survey score", "Survey replied date",
   "Assignee name", "Assignee email", "Customer email", "Customer name", "First response time (s)",
   "Resolution time (s)", "Number of agent messages", "Number of customer messages", "Ticket URL",
-  "Ticket Field: Contact reason", "Ticket Field: AI Agent Outcome", "Customer Field: Customer Type",
+  "Ticket Field: Call status", "Ticket Field: Managed sentiment", "Ticket Field: AI Intent",
+  "Ticket Field: Contact reason", "Ticket Field: Product", "Ticket Field: Resolution", "Ticket Field: AI Agent Outcome",
+  "Ticket Field: AI Agent Sales Discount", "Ticket Field: AI Agent Sales Opportunity", "Customer Field: Customer Type",
 ];
+
+// AI Intent values (Gorgias's three-level list) that fit each category; see rules/categories.json `intents`.
+const INTENTS = {
+  damage_missing_wrong: ["Order::Damaged::Other", "Order::Missing item::Other", "Order::Wrong item::Other", "Shipping::Delivered not received::Other"],
+  order_change: ["Order::Cancel::Other", "Order::Edit::Other", "Shipping::Change address::Other"],
+  return_exchange: ["Return::Request::Other", "Exchange::Request::Other", "Order::Refund::Other"],
+  warranty: ["Warranty::Claim::Other"],
+  subscription: ["Subscription::Cancel::Other", "Subscription::Modification::Other"],
+  wismo: ["Order::Status::Other", "Shipping::Delay::Other"],
+  other: ["Shipping::Information::Other", "Pre-sale::Website questions::Other"],
+};
 
 /** mulberry32 */
 function rng(seed) {
@@ -98,6 +111,9 @@ function ts(date) {
  */
 export function generate({ rows, seed, aiShare = 0.6 }) {
   const r = rng(seed);
+  // A second stream for the AI Intent, Resolution, ai_answered and action tags, so the draws above stay the same
+  // and every ticket keeps the subject, outcome and dates it had before these columns existed.
+  const r2 = rng(seed + 1000);
   const out = [HEADERS.map(csvCell).join(",")];
   const start = Date.UTC(2026, 9, 1);
   for (let i = 0; i < rows; i++) {
@@ -110,16 +126,35 @@ export function generate({ rows, seed, aiShare = 0.6 }) {
     let aiField = "";
     let human = false;
     let closed = true;
+    let aiIntent = "";
+    let snoozedOpen = false; // snoozed with no Closed date in the old samples: its Closed date comes from r2
+    let resolution = "";
     if (ai) {
       const x = r();
-      if (x < 0.5) tags.push("ai_close"), (aiField = "Close");
-      else if (x < 0.82) tags.push("ai_handover"), (aiField = "Handover"), (human = true);
-      else if (x < 0.86) tags.push("ai_answered", "ai_handover"), (aiField = "Handover"), (human = true);
-      else if (x < 0.9) tags.push("ai_close", "ai_handover"), (human = true);
-      else if (x < 0.94) tags.push("ai_snooze"), (closed = r() < 0.5);
-      else if (x < 0.96) tags.push("ai_processing"), (closed = false);
-      else if (x < 0.98) tags.push("ai_close"), (closed = false); // closed by AI, open again now
-      else aiField = "Close"; // field only, no tag
+      // Gorgias adds ai_answered on every ticket the AI replied to, whatever the outcome.
+      if (x < 0.5) tags.push("ai_answered", "ai_close"), (aiField = "Close::With message");
+      else if (x < 0.82) {
+        const replied = r2() < 0.6;
+        if (replied) tags.push("ai_answered");
+        tags.push("ai_handover"), (aiField = replied ? "Handover::With message" : "Handover::Without message"), (human = true);
+      } else if (x < 0.86) tags.push("ai_answered", "ai_handover"), (aiField = "Handover::With message"), (human = true);
+      else if (x < 0.9) tags.push("ai_answered", "ai_close", "ai_handover"), (human = true);
+      else if (x < 0.94) {
+        snoozedOpen = r() >= 0.5; // snoozed tickets export with a Closed date: Gorgias closes them while they're snoozed
+        tags.push("ai_answered", "ai_snooze"), (aiField = "Snooze::With message");
+      } else if (x < 0.96) tags.push("ai_processing"), (closed = false);
+      else if (x < 0.98) tags.push("ai_answered", "ai_close"), (closed = false); // closed by AI, open again now
+      else aiField = "Close::With message"; // field only, no tag
+      const closedByAi = tags.includes("ai_close") && !tags.includes("ai_handover") && closed;
+      const y = r2();
+      if (closedByAi && category === "order_change" && y < 0.3) tags.push("ai_executed_action");
+      else if (closedByAi && category === "order_change" && y < 0.35) tags.push("ai_failed_action");
+      if (r2() < 0.9) aiIntent = pick(r2, INTENTS[category]);
+      if (tags.includes("ai_executed_action")) {
+        resolution = /cancel|annuler/i.test(subject) ? "Order::Cancelled" : "Order::Updated Information";
+      } else if (aiField || tags.length) {
+        resolution = tags.includes("ai_handover") || tags.includes("ai_processing") ? "No action" : "Information Given";
+      }
     } else {
       human = true;
       closed = r() < 0.9;
@@ -127,16 +162,16 @@ export function generate({ rows, seed, aiShare = 0.6 }) {
     }
     if (r() < 0.1) tags.push("vip");
     const created = new Date(start + Math.floor(r() * 45 * 86400) * 1000);
-    const closedAt = closed ? new Date(created.getTime() + Math.floor(r() * 3 * 86400) * 1000) : null;
+    const closedAt = closed ? new Date(created.getTime() + Math.floor((snoozedOpen ? r2() : r()) * 3 * 86400) * 1000) : null;
     const agent = human ? pick(r, AGENTS) : ["", ""];
     const name = `${pick(r, FIRST)} ${pick(r, LAST)}`;
     const email = `${name.toLowerCase().replace(" ", ".")}${i}@example.com`;
     const row = [
-      id, tags.join(","), pick(r, CHANNELS), "normal", "", "", "False", subject, ts(created),
+      id, [...tags].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).join(","), pick(r, CHANNELS), "normal", "", "", "False", subject, ts(created),
       closedAt ? ts(closedAt) : "", r() < 0.2 ? 1 + Math.floor(r() * 5) : "", "", agent[0], agent[1], email, name,
       60 + Math.floor(r() * 3600), closedAt ? Math.floor((closedAt.getTime() - created.getTime()) / 1000) : "",
       1 + Math.floor(r() * 3), 1 + Math.floor(r() * 3), `https://northwind-goods.gorgias.example/app/ticket/${id}`,
-      r() < 0.3 ? category : "", aiField, pick(r, ["New", "Returning"]),
+      "", "", aiIntent, r() < 0.3 ? category : "", "", resolution, aiField, "", "", pick(r, ["New", "Returning"]),
     ];
     out.push(row.map(csvCell).join(","));
   }

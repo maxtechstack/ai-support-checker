@@ -14,7 +14,7 @@ export function sampleFiles() {
     "gorgias-3000": join(root, "samples", "gorgias-3000.csv"),
     "gorgias-50000": big,
     ...Object.fromEntries(
-      ["gorgias-small", "gorgias-no-ai", "messy", "missing-headers", "empty", "header-only", "not-a-csv"].map((n) => [
+      ["gorgias-small", "gorgias-no-ai", "gorgias-ai-real-tags", "messy", "missing-headers", "empty", "header-only", "not-a-csv"].map((n) => [
         n,
         join(root, "samples", "edge", `${n}.csv`),
       ]),

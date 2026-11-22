@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { RULES, classifyTicket, compileRules, keywordPattern, outcomeFromField, splitTags } from "../core/index.js";
+import { RULES, categoryFromIntent, classifyTicket, compileRules, intentKey, keywordPattern, outcomeFromField, resolutionKind, splitTags } from "../core/index.js";
 import { SUBJECTS } from "../samples/generate.js";
 
 const rules = compileRules(RULES.gorgias, RULES.categories);
@@ -44,15 +44,74 @@ test("AI outcome: close, handover, both, open, other, ignore", () => {
   assert.equal(cls({ tags: ["vip"] }).outcome, "human_only");
 });
 
-test("AI Agent Outcome field is used only when there is no AI tag", () => {
+test("AI Agent Outcome field: exact prefixes for the five Gorgias values, used only when there is no AI tag", () => {
   const w = RULES.gorgias.ai.outcomeField;
-  assert.equal(outcomeFromField("Close", w), "close");
-  assert.equal(outcomeFromField("Handover", w), "handover");
+  assert.equal(outcomeFromField("Close::With message", w), "close");
+  assert.equal(outcomeFromField("Close::Without message", w), "close");
+  assert.equal(outcomeFromField("Handover::With message", w), "handover");
+  assert.equal(outcomeFromField("Handover::Without message", w), "handover");
+  assert.equal(outcomeFromField("Snooze::With message", w), "snooze");
+  assert.equal(outcomeFromField("close :: with message", w), "close", "case and spaces around :: don't matter");
+  assert.equal(outcomeFromField("Closed by agent", w), "other", "no guessing on words: only the prefixes count");
   assert.equal(outcomeFromField("", w), null);
-  const f = cls({ aiField: "Close" });
+  const f = cls({ aiField: "Close::Without message" });
   assert.equal(f.outcome, "ai_closed");
   assert.ok(f.flags.fieldOnly);
-  assert.equal(cls({ tags: ["ai_handover"], aiField: "Close" }).outcome, "handed_back");
+  assert.equal(f.action, "no_action_recorded");
+  assert.equal(cls({ aiField: "Handover::Without message" }).outcome, "handed_back");
+  const snoozed = cls({ aiField: "Snooze::With message", closed: true });
+  assert.equal(snoozed.outcome, "ai_open", "Snooze:: means waiting, even with a Closed date");
+  assert.ok(snoozed.aiInvolved);
+  assert.equal(cls({ tags: ["ai_handover"], aiField: "Close::With message" }).outcome, "handed_back");
+});
+
+test("snoozed ticket with a Closed date stays open (Gorgias closes tickets while they're snoozed)", () => {
+  const s = cls({ tags: ["ai_answered", "ai_snooze"], closed: true, aiField: "Snooze::With message" });
+  assert.equal(s.outcome, "ai_open");
+  assert.equal(s.action, null);
+  assert.equal(s.flags.closeTagButOpen, false);
+});
+
+test("ai_answered sits next to an outcome and is never an outcome by itself", () => {
+  assert.equal(cls({ tags: ["ai_answered", "ai_close"] }).outcome, "ai_closed");
+  assert.equal(cls({ tags: ["ai_answered", "ai_handover"] }).outcome, "handed_back");
+  assert.equal(cls({ tags: ["ai_answered"] }).outcome, "ai_open");
+});
+
+test("action status on AI-closed tickets: done wins over failed, then no action recorded", () => {
+  assert.equal(cls({ tags: ["ai_answered", "ai_close", "ai_executed_action"] }).action, "action_done");
+  assert.equal(cls({ tags: ["ai_answered", "ai_close", "ai_failed_action"] }).action, "action_failed");
+  assert.equal(cls({ tags: ["ai_close", "ai_executed_action", "ai_failed_action"] }).action, "action_done");
+  assert.equal(cls({ tags: ["ai_answered", "ai_close"] }).action, "no_action_recorded");
+  assert.equal(cls({ tags: ["ai_handover", "ai_executed_action"] }).action, null, "only AI-closed tickets get an action status");
+  assert.equal(cls({ tags: ["ai_close", "ai_executed_action"], closed: false }).action, null, "reopened: not AI-closed");
+  assert.ok(cls({ tags: ["ai_executed_action"] }).aiInvolved, "an action tag alone still means the AI was involved");
+});
+
+test("AI Intent wins over tags and keywords; unknown intents fall back", () => {
+  assert.equal(intentKey("Order::Cancel::Other"), "order::cancel");
+  assert.equal(intentKey(" Order :: Missing  item :: Other "), "order::missing item");
+  assert.equal(categoryFromIntent("Order::Damaged::Other", rules), "damage_missing_wrong");
+  assert.equal(categoryFromIntent("Pre-sale::Website questions::Other", rules), "other", "level::* matches any second level");
+  assert.equal(categoryFromIntent("Order::Payment::Other", rules), null);
+  assert.equal(categoryFromIntent("", rules), null);
+  // The trial's ticket 900005: ORDER-STATUS tag, but the intent is a shipping question.
+  const row = { tags: ["ai_answered", "ai_close", "ORDER-STATUS"], subject: "Ship to another country" };
+  assert.equal(cls(row).category, "wismo", "without AI Intent the tag decides");
+  const withIntent = cls({ ...row, aiIntent: "Shipping::Information::Other" });
+  assert.equal(withIntent.category, "other");
+  assert.ok(withIntent.flags.categoryFromIntent);
+  assert.equal(cls({ subject: "Where is my order?", aiIntent: "Order::Damaged::Other" }).category, "damage_missing_wrong");
+  assert.equal(cls({ subject: "My mug arrived damaged", aiIntent: "Order::Payment::Other" }).category, "damage_missing_wrong", "unknown intent: keywords decide");
+});
+
+test("Resolution field kinds: action values keep the rules' spelling, never file text", () => {
+  assert.deepEqual(resolutionKind("Order::Cancelled", rules), { kind: "action", value: "Order::Cancelled" });
+  assert.deepEqual(resolutionKind(" replacement SENT ", rules), { kind: "action", value: "Replacement sent" });
+  assert.deepEqual(resolutionKind("Information Given", rules), { kind: "info", value: null });
+  assert.deepEqual(resolutionKind("No action", rules), { kind: "info", value: null });
+  assert.deepEqual(resolutionKind("Discount", rules), { kind: "other", value: null });
+  assert.deepEqual(resolutionKind("", rules), { kind: "empty", value: null });
 });
 
 test("categories: priority order and tags", () => {
@@ -87,5 +146,15 @@ test("rules files are consistent", () => {
   for (const id of c.priority) assert.ok(c.labels[id], `label for ${id}`);
   for (const lang of Object.values(c.keywords)) {
     for (const k of Object.keys(lang)) if (k !== "basic") assert.ok(c.priority.includes(k), k);
+  }
+  for (const k of Object.keys(c.intents)) if (k !== "$comment") assert.ok(c.priority.includes(k), `intents: ${k}`);
+  const seen = new Set();
+  for (const [k, list] of Object.entries(c.intents)) {
+    if (k === "$comment") continue;
+    for (const i of list) {
+      assert.equal(i, i.toLowerCase(), `intents are lowercase: ${i}`);
+      assert.ok(!seen.has(i), `intent listed twice: ${i}`);
+      seen.add(i);
+    }
   }
 });

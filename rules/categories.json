@@ -1,6 +1,6 @@
 {
-  "$comment": "Keyword and tag rules for categories. Matching is lowercase with word boundaries on the subject, tags and (when the export has it) the first customer message. A trailing * matches any word ending (refund* matches refunded, refunds). A ticket gets the first matching category in `priority`. Edit this file, then run `npm run rules`.",
-  "version": "2026-11-16.1",
+  "$comment": "Category rules. A ticket whose AI Intent field is listed in `intents` gets that category. Otherwise keyword and tag rules decide. Matching is lowercase with word boundaries on the subject, tags and (when the export has it) the first customer message. A trailing * matches any word ending (refund* matches refunded, refunds). A ticket gets the first matching category in `priority`. Edit this file, then run `npm run rules`.",
+  "version": "2026-11-22.1",
   "priority": ["damage_missing_wrong", "order_change", "return_exchange", "warranty", "subscription", "wismo", "other"],
   "needsBackendAction": ["damage_missing_wrong", "order_change", "return_exchange", "warranty", "subscription"],
   "labels": {
@@ -20,6 +20,16 @@
     "warranty": ["warranty", "warranty_claim", "defective", "faulty"],
     "subscription": ["subscription", "subscriptions", "subscription_cancellation", "cancel_subscription", "recharge", "skio"],
     "wismo": ["wismo", "order_status", "where_is_my_order", "shipping_status", "tracking"]
+  },
+  "intents": {
+    "$comment": "Gorgias 'AI Intent' ticket field (filled automatically, three levels such as Order::Cancel::Other). The first two levels, lowercased, map to a category and win over tags and keywords. `level::*` matches any second level. An intent not listed here falls back to tags and keywords.",
+    "damage_missing_wrong": ["order::damaged", "order::missing item", "order::wrong item", "product::quality issues", "shipping::delivered not received"],
+    "order_change": ["order::cancel", "order::edit", "shipping::change address"],
+    "return_exchange": ["return::request", "return::status", "return::other", "exchange::request", "exchange::status", "exchange::other", "order::refund"],
+    "warranty": ["warranty::claim", "warranty::information", "warranty::other"],
+    "subscription": ["subscription::cancel", "subscription::modification", "subscription::other"],
+    "wismo": ["order::status", "shipping::delay"],
+    "other": ["shipping::information", "pre-sale::*", "marketing::*", "feedback::*", "account::*"]
   },
   "keywords": {
     "en": {

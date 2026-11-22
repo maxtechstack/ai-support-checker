@@ -22,5 +22,6 @@ the same way.
 ## What's in the file
 
 Ticket id, tags, channel, subject, dates, assignee, customer email and name, counts of messages, and one column per
-ticket field. No message text. The checker reads only the ticket id, tags, subject, closed date and two ticket
-fields ("AI Agent Outcome", "Contact reason"), and it reads them in your browser: the file is never uploaded.
+ticket field. No message text. The checker reads only the ticket id, tags, subject, closed date, the number of
+customer messages and four ticket fields ("AI Agent Outcome", "AI Intent", "Resolution", "Contact reason"), and it
+reads them in your browser: the file is never uploaded.

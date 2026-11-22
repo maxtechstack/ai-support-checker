@@ -1,0 +1,146 @@
+{
+  "resultVersion": 2,
+  "rulesVersion": {
+    "gorgias": "2026-11-22.1",
+    "categories": "2026-11-22.1"
+  },
+  "rows": {
+    "read": 5,
+    "counted": 5,
+    "skipped": {
+      "empty_row": 0,
+      "column_count": 0,
+      "no_ticket_id": 0,
+      "duplicate_ticket_id": 0
+    }
+  },
+  "headers": {
+    "used": {
+      "ticketId": "Ticket id",
+      "tags": "Tags",
+      "subject": "Subject",
+      "closedAt": "Closed date",
+      "aiOutcomeField": "Ticket Field: AI Agent Outcome",
+      "aiIntent": "Ticket Field: AI Intent",
+      "resolution": "Ticket Field: Resolution",
+      "customerMessages": "Number of customer messages",
+      "contactReason": "Ticket Field: Contact reason"
+    },
+    "missingOptional": []
+  },
+  "tickets": 5,
+  "humanOnly": 0,
+  "ai": {
+    "handled": 5,
+    "closed": 3,
+    "handedBack": 2,
+    "open": 0,
+    "bothCloseAndHandover": 0,
+    "closeTagButOpen": 0,
+    "fieldOnly": 0,
+    "categoryFromIntent": 5,
+    "actionDone": 1,
+    "actionFailed": 0,
+    "noActionRecorded": 2
+  },
+  "exceptionsClosedByAi": 2,
+  "exceptionActions": {
+    "actionDone": 1,
+    "actionFailed": 0,
+    "noActionRecorded": 1
+  },
+  "exceptionResolution": {
+    "columnPresent": true,
+    "filled": 2,
+    "action": 1,
+    "informationOnly": 1,
+    "other": 0,
+    "actionValues": {
+      "Order::Cancelled": 1
+    }
+  },
+  "categories": [
+    {
+      "id": "damage_missing_wrong",
+      "label": "Damaged, missing or wrong item",
+      "needsBackendAction": true,
+      "aiHandled": 1,
+      "aiClosed": 0,
+      "aiActionDone": 0,
+      "handedBack": 1,
+      "aiOpen": 0,
+      "humanOnly": 0
+    },
+    {
+      "id": "order_change",
+      "label": "Order change or cancellation",
+      "needsBackendAction": true,
+      "aiHandled": 2,
+      "aiClosed": 2,
+      "aiActionDone": 1,
+      "handedBack": 0,
+      "aiOpen": 0,
+      "humanOnly": 0
+    },
+    {
+      "id": "return_exchange",
+      "label": "Return, exchange or refund",
+      "needsBackendAction": true,
+      "aiHandled": 0,
+      "aiClosed": 0,
+      "aiActionDone": 0,
+      "handedBack": 0,
+      "aiOpen": 0,
+      "humanOnly": 0
+    },
+    {
+      "id": "warranty",
+      "label": "Warranty or faulty product",
+      "needsBackendAction": true,
+      "aiHandled": 0,
+      "aiClosed": 0,
+      "aiActionDone": 0,
+      "handedBack": 0,
+      "aiOpen": 0,
+      "humanOnly": 0
+    },
+    {
+      "id": "subscription",
+      "label": "Subscription change",
+      "needsBackendAction": true,
+      "aiHandled": 0,
+      "aiClosed": 0,
+      "aiActionDone": 0,
+      "handedBack": 0,
+      "aiOpen": 0,
+      "humanOnly": 0
+    },
+    {
+      "id": "wismo",
+      "label": "Where is my order",
+      "needsBackendAction": false,
+      "aiHandled": 1,
+      "aiClosed": 0,
+      "aiActionDone": 0,
+      "handedBack": 1,
+      "aiOpen": 0,
+      "humanOnly": 0
+    },
+    {
+      "id": "other",
+      "label": "Everything else",
+      "needsBackendAction": false,
+      "aiHandled": 1,
+      "aiClosed": 1,
+      "aiActionDone": 0,
+      "handedBack": 0,
+      "aiOpen": 0,
+      "humanOnly": 0
+    }
+  ],
+  "notes": {
+    "noAiTickets": false,
+    "smallSample": true,
+    "cameBackAvailable": false
+  }
+}

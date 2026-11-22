@@ -14,6 +14,9 @@
     "Subject",
     "Closed date",
     "Ticket Field: AI Agent Outcome",
+    "Ticket Field: AI Intent",
+    "Ticket Field: Resolution",
+    "Number of customer messages",
     "Ticket Field: Contact reason"
   ]
 }
