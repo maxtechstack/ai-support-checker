@@ -55,9 +55,11 @@ function actionSentence(e, d, f) {
     return [`The export shows no action recorded by the AI on ${e === 1 ? "it" : "any of them"}, and can't show whether refunds, reships or 3PL changes were finished.`];
   }
   if (e === 1) {
-    return [`The AI recorded ${d ? "a completed action in Shopify" : "a failed action"} on it; ${NOT_FINISHED}`];
+    return [`The AI recorded ${d ? "a completed action" : "a failed action"} on it; ${NOT_FINISHED}`];
   }
-  return ["The AI recorded a completed action in Shopify on ", { n: d }, " of them and a failed action on ", { n: f }, `; ${NOT_FINISHED}`];
+  if (f === 0) return ["The AI recorded a completed action on ", { n: d }, " of them; ", NOT_FINISHED];
+  if (d === 0) return ["The AI recorded a failed action on ", { n: f }, " of them; ", NOT_FINISHED];
+  return ["The AI recorded a completed action on ", { n: d }, " of them and a failed action on ", { n: f }, `; ${NOT_FINISHED}`];
 }
 
 /** @param {import("./checker.js").CheckResult} r */

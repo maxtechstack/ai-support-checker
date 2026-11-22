@@ -113,14 +113,13 @@
             <tfoot id="cat-foot"></tfoot>
           </table>
           <p class="small resolution-line" id="resolution-line" hidden></p>
-          <p class="small muted">Under 20 tickets in a category: count only, no percentage. “AI action recorded” counts closes where AI Agent tagged a completed action in Shopify (ai_executed_action). “Handed back” includes tickets where AI Agent replied first and then handed over. “Still open or snoozed” includes tickets AI Agent closed that were opened again. Each row adds up.</p>
+          <p class="small muted">Under 20 tickets in a category: count only, no percentage. “AI action recorded” counts closes where AI Agent tagged a completed action in Shopify or another connected app (ai_executed_action). “Handed back” includes tickets where AI Agent replied first and then handed over. “Still open or snoozed” includes snoozed tickets (Gorgias exports them with a Closed date) and tickets AI Agent is still working on. A ticket the customer reopened after an AI close usually ends up under “Handed back”. Each row adds up.</p>
         </div>
 
         <aside class="box cant" aria-labelledby="cant-title">
           <h3 class="h3" id="cant-title">What this can't tell you</h3>
           <ul>
-            <li>Whether the refund, reship or 3PL change actually happened. That lives in Shopify, your 3PL and your carrier, not in the ticket.</li>
-            <li>Whether a refund, reship or 3PL change the AI started was finished outside Shopify.</li>
+            <li>Whether a refund, reship or 3PL change actually happened, including ones the AI started. That lives in Shopify, your 3PL and your carrier, not in the ticket.</li>
             <li>Exact categories. It's an estimate from AI Intent, tags and keywords; check a few tickets per category yourself.</li>
             <li>What the leftovers cost you. That needs your own handle times and hourly cost.</li>
           </ul>

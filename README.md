@@ -49,8 +49,8 @@ How to get the export: [docs/how-to-export-from-gorgias.md](docs/how-to-export-f
   `ai_answered` sits next to every outcome and is never an outcome by itself. **Snoozed** (`ai_snooze`) counts as
   still open, even though Gorgias exports snoozed tickets with a Closed date.
 - **Action recorded:** on tickets the AI closed alone, `ai_executed_action` means it completed an action in Shopify
-  and `ai_failed_action` means an action couldn't complete. The "Resolution" ticket field, when filled, is shown as
-  context only. Neither shows whether a refund, reship or 3PL change was finished outside Shopify.
+  or another connected app, and `ai_failed_action` means an action couldn't complete. The "Resolution" ticket field,
+  when filled, is shown as context only. Neither shows whether a refund, reship or 3PL change actually happened.
 - **Customers who came back** after an AI close aren't counted: Gorgias removes `ai_close` when a ticket reopens, so
   the export shows only the last state.
 - **Categories:** the "AI Intent" ticket field when its first two levels are in the rules (e.g. `order::damaged`);

@@ -124,7 +124,7 @@ test("action counts and Resolution line on AI-closed exceptions, including a syn
   assert.deepEqual([r.ai.actionDone, r.ai.actionFailed, r.ai.noActionRecorded], [1, 1, 2]);
   assert.equal(categoryRows(r).find((c) => c.id === "order_change").aiActionDone, 1);
   assert.equal(resolutionLine(r), "Resolution field on these closes: 1 action (Order::Cancelled), 2 information only.");
-  assert.match(headlineText(r), /3 of the tickets it closed alone were post-purchase exceptions .* The AI recorded a completed action in Shopify on 1 of them and a failed action on 1; the export can't show whether refunds, reships or 3PL changes were finished\.$/);
+  assert.match(headlineText(r), /3 of the tickets it closed alone were post-purchase exceptions .* The AI recorded a completed action on 1 of them and a failed action on 1; the export can't show whether refunds, reships or 3PL changes were finished\.$/);
 });
 
 test("action sentence: none recorded, singular, and no sentence without exceptions", () => {
@@ -132,7 +132,13 @@ test("action sentence: none recorded, singular, and no sentence without exceptio
   assert.match(headlineText(none), /2 of the tickets it closed alone were .* The export shows no action recorded by the AI on any of them, and can't show whether refunds, reships or 3PL changes were finished\.$/);
   assert.equal(resolutionLine(none), null, "no Resolution column: no line");
   const one = run([["1", "ai_close,ai_executed_action", "Cancel my order", "x"]]);
-  assert.match(headlineText(one), /1 of the tickets it closed alone was a post-purchase exception .* The AI recorded a completed action in Shopify on it; the export can't/);
+  assert.match(headlineText(one), /1 of the tickets it closed alone was a post-purchase exception .* The AI recorded a completed action on it; the export can't/);
+  const oneFailed = run([["1", "ai_close,ai_failed_action", "Cancel my order", "x"]]);
+  assert.match(headlineText(oneFailed), /The AI recorded a failed action on it; the export can't/);
+  const doneOnly = run([["1", "ai_close,ai_executed_action", "Cancel my order", "x"], ["2", "ai_close", "Broken", "x"]]);
+  assert.match(headlineText(doneOnly), /The AI recorded a completed action on 1 of them; the export can't show whether refunds, reships or 3PL changes were finished\.$/);
+  const failedOnly = run([["1", "ai_close,ai_failed_action", "Cancel my order", "x"], ["2", "ai_close", "Broken", "x"]]);
+  assert.match(headlineText(failedOnly), /The AI recorded a failed action on 1 of them; the export can't show/);
   const oneNone = run([["1", "ai_close", "Broken", "x"]]);
   assert.match(headlineText(oneNone), /no action recorded by the AI on it, and can't show/);
   const zero = run([["1", "ai_close", "Where is my order", "x"]]);

@@ -169,7 +169,7 @@ test("trial fixture (real AI Agent tags): zero requests, action sentence, action
   await page.locator("#counted summary").click();
   expect(requests).toEqual([]);
   expect(violations).toEqual([]);
-  await expect(page.locator("#headline")).toContainText("The AI recorded a completed action in Shopify on 1 of them and a failed action on 0;");
+  await expect(page.locator("#headline")).toContainText("The AI recorded a completed action on 1 of them; the export can't show whether refunds, reships or 3PL changes were finished.");
   await expect(page.locator("#resolution-line")).toHaveText("Resolution field on these closes: 1 action (Order::Cancelled), 1 information only.");
   const orderChange = page.locator("#cat-rows tr", { hasText: "Order change" });
   await expect(orderChange.locator("td").nth(2)).toHaveText("1");
