@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { checkFile } from "../../cli/check.js";
@@ -7,13 +8,49 @@ import { root, sampleFiles } from "../helpers.js";
 
 const samples = sampleFiles();
 
-/** Load the page and start recording every request made after load. */
+/**
+ * On closewellhq.com, Cloudflare's edge adds its own scripts to the HTML (the /cdn-cgi/ bot-detection loader, and
+ * the Web Analytics beacon when automatic injection is on). The /check/ CSP blocks them, which is the point, but the
+ * browser logs each block. Those two sources, and only those, are ignored; any other violation still fails a test.
+ * A blocked inline script is identified by its sha256: it must match an inline script in the served HTML that loads
+ * from /cdn-cgi/. Serving locally there are no such scripts, so nothing is ignored.
+ * @param {string} text console message
+ * @param {Set<string>} injectedHashes sha256 (base64) of inline scripts in the served HTML that reference /cdn-cgi/
+ */
+export function isCloudflareInjection(text, injectedHashes) {
+  const url = text.match(/(?:Loading the script|Refused to load the script) '([^']+)'/)?.[1];
+  if (url) {
+    const u = new URL(url, "https://closewellhq.com/");
+    return u.hostname === "static.cloudflareinsights.com" || u.pathname.startsWith("/cdn-cgi/");
+  }
+  if (/Executing inline script/.test(text)) {
+    const hash = text.match(/'sha256-([A-Za-z0-9+/=]+)'/)?.[1];
+    return Boolean(hash && injectedHashes.has(hash));
+  }
+  return false;
+}
+
+/** Load the page and start recording every request made after load, and every unexpected CSP violation. */
 async function open(page) {
   const requests = [];
   const violations = [];
-  page.on("console", (m) => /Content Security Policy|Refused to/.test(m.text()) && violations.push(m.text()));
-  await page.goto("/check/", { waitUntil: "load" });
+  const early = [];
+  /** @type {Set<string> | null} */
+  let injected = null;
+  page.on("console", (m) => {
+    const text = m.text();
+    if (!/Content Security Policy|Refused to/.test(text)) return;
+    if (!injected) early.push(text);
+    else if (!isCloudflareInjection(text, injected)) violations.push(text);
+  });
+  const res = await page.goto("/check/", { waitUntil: "load" });
+  const html = res ? await res.text() : "";
+  injected = new Set();
+  for (const m of html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)) {
+    if (m[1].includes("/cdn-cgi/")) injected.add(createHash("sha256").update(m[1]).digest("base64"));
+  }
   await page.waitForLoadState("networkidle");
+  violations.push(...early.filter((t) => !isCloudflareInjection(t, /** @type {Set<string>} */ (injected))));
   page.on("request", (r) => requests.push(r.url()));
   return { requests, violations };
 }
@@ -178,4 +215,18 @@ test("trial fixture (real AI Agent tags): zero requests, action sentence, action
   await expect(page.locator("#counted-body")).toContainText("Rules version 2026-11-22.1");
   const text = await page.locator("body").innerText();
   for (const s of ["shopper1@example.com", "Shopper Two", "Ship to another country", "900003"]) expect(text).not.toContain(s);
+});
+
+test("CSP filter ignores only Cloudflare's own injected scripts", () => {
+  const inline = "console.log(1)";
+  const hash = createHash("sha256").update(inline).digest("base64");
+  const msg = (h) => `Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-${h}'), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.`;
+  const load = (u) => `Loading the script '${u}' violates the following Content Security Policy directive: "script-src 'self'".`;
+  expect(isCloudflareInjection(msg(hash), new Set([hash]))).toBe(true);
+  expect(isCloudflareInjection(msg(hash), new Set())).toBe(false);
+  expect(isCloudflareInjection(load("https://static.cloudflareinsights.com/beacon.min.js/v1"), new Set())).toBe(true);
+  expect(isCloudflareInjection(load("https://closewellhq.com/cdn-cgi/challenge-platform/scripts/jsd/main.js"), new Set())).toBe(true);
+  expect(isCloudflareInjection(load("https://evil.example/cdn-cgi.js"), new Set())).toBe(false);
+  expect(isCloudflareInjection(load("https://static.cloudflareinsights.com.evil.example/x.js"), new Set())).toBe(false);
+  expect(isCloudflareInjection("Refused to connect to 'https://example.com/' because it violates connect-src 'none'", new Set())).toBe(false);
 });
